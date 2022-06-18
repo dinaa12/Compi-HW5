@@ -1,0 +1,107 @@
+%{
+    #include <iostream>
+    #include "hw3_output.hpp"
+    using namespace output;
+    using namespace std;
+
+    extern int yylex();
+    extern int yylineno;
+
+    void yyerror(const char* msg);
+%}
+
+%token VOID INT BYTE B BOOL AUTO TRUE FALSE RETURN IF ELSE WHILE BREAK CONTINUE SC COMMA LPAREN LBRACE ID NUM STRING
+
+%right ASSIGN
+
+%left OR
+%left AND
+
+%left RELOP
+
+%left BINOP_ADD BINOP_SUB
+%left BINOP_MUL BINOP_DIV
+
+%left RPAREN
+%left RBRACE
+
+%nonassoc ELSE
+
+%right NOT
+
+%%
+
+Program : Funcs                                                             { printProductionRule(1); }
+;
+Funcs : FuncDecl Funcs                                                      { printProductionRule(3); }
+        | /*epsilon*/                                                       { printProductionRule(2); }
+;
+FuncDecl : RetType ID LPAREN Formals RPAREN LBRACE Statements RBRACE        { printProductionRule(4); }
+;
+RetType : Type                                                              { printProductionRule(5); }
+          | VOID                                                            { printProductionRule(6); }
+;
+Formals : FormalsList                                                       { printProductionRule(8); }
+          | /*epsilon*/                                                     { printProductionRule(7); }
+;
+FormalsList : FormalDecl                                                    { printProductionRule(9); }
+              | FormalDecl COMMA FormalsList                                { printProductionRule(10); }
+;
+FormalDecl : Type ID                                                        { printProductionRule(11); }
+;
+Statements : Statement                                                      { printProductionRule(12); }
+             | Statements Statement                                         { printProductionRule(13); }
+;
+Statement : LBRACE Statements RBRACE                                        { printProductionRule(14); }
+            | Type ID SC                                                    { printProductionRule(15); }
+            | Type ID ASSIGN Exp SC                                         { printProductionRule(16); }
+            | AUTO ID ASSIGN Exp SC                                         { printProductionRule(17); }
+            | ID ASSIGN Exp SC                                              { printProductionRule(18); }
+            | Call SC                                                       { printProductionRule(19); }
+            | RETURN SC                                                     { printProductionRule(20); }
+            | RETURN Exp SC                                                 { printProductionRule(21); }
+            | IF LPAREN Exp RPAREN Statement                                { printProductionRule(22); }
+            | IF LPAREN Exp RPAREN Statement ELSE Statement                 { printProductionRule(23); }
+            | WHILE LPAREN Exp RPAREN Statement                             { printProductionRule(24); }
+            | BREAK SC                                                      { printProductionRule(25); }
+            | CONTINUE SC                                                   { printProductionRule(26); }
+;
+Call : ID LPAREN ExpList RPAREN                                             { printProductionRule(27); }
+       | ID LPAREN RPAREN                                                   { printProductionRule(28); }
+;
+ExpList : Exp                                                               { printProductionRule(29); }
+          | Exp COMMA ExpList                                               { printProductionRule(30); }
+;
+Type : INT                                                                  { printProductionRule(31); }
+       | BYTE                                                               { printProductionRule(32); }
+       | BOOL                                                               { printProductionRule(33); }
+;
+Exp : LPAREN Exp RPAREN                                                     { printProductionRule(34); }
+      | Exp BINOP_ADD Exp                                                   { printProductionRule(35); }
+      | Exp BINOP_SUB Exp                                                   { printProductionRule(35); }
+      | Exp BINOP_MUL Exp                                                   { printProductionRule(35); }
+      | Exp BINOP_DIV Exp                                                   { printProductionRule(35); }
+      | ID                                                                  { printProductionRule(36); }
+      | Call                                                                { printProductionRule(37); }
+      | NUM                                                                 { printProductionRule(38); }
+      | NUM B                                                               { printProductionRule(39); }
+      | STRING                                                              { printProductionRule(40); }
+      | TRUE                                                                { printProductionRule(41); }
+      | FALSE                                                               { printProductionRule(42); }
+      | NOT Exp                                                             { printProductionRule(43); }
+      | Exp AND Exp                                                         { printProductionRule(44); }
+      | Exp OR Exp                                                          { printProductionRule(45); }
+      | Exp RELOP Exp                                                       { printProductionRule(46); }
+      | LPAREN Type RPAREN Exp                                              { printProductionRule(47); }
+;
+
+%%
+
+void yyerror(const char* msg) {
+    errorSyn(yylineno);
+    exit(0);
+}
+
+int main() {
+    return yyparse();
+}
