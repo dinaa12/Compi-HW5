@@ -1,11 +1,13 @@
 %{
     #include <iostream>
+    #include <vector>
     #include "hw3_output.hpp"
+    #include "symbolTable.h"
+    #include "parserFuncs.h"
+    #include "semanticTypes.h"
+
     using namespace output;
     using namespace std;
-
-    extern int yylex();
-    extern int yylineno;
 
     void yyerror(const char* msg);
 %}
@@ -31,68 +33,169 @@
 
 %%
 
-Program : Funcs                                                             { printProductionRule(1); }
+Program : ProgramM1 Funcs                                                   {
+                                                                                checkMainExist();
+                                                                                closeScope();
+                                                                            }
 ;
-Funcs : FuncDecl Funcs                                                      { printProductionRule(3); }
-        | /*epsilon*/                                                       { printProductionRule(2); }
+
+ProgramM1 : /*epsilon*/                                                     {
+                                                                                openScope();
+                                                                                addFuncToSymTable("print", "VOID", vector<SemTypeName>(1, "STRING"), -1);
+                                                                                addFuncToSymTable("printi", "VOID", vector<SemTypeName>(1, "INT"), -1);
+                                                                            }
 ;
-FuncDecl : RetType ID LPAREN Formals RPAREN LBRACE Statements RBRACE        { printProductionRule(4); }
+
+Funcs : FuncDecl Funcs                                                      { }
+        | /*epsilon*/                                                       { if (yychar != YYEOF) yyerror("not EOF"); }
 ;
-RetType : Type                                                              { printProductionRule(5); }
-          | VOID                                                            { printProductionRule(6); }
+
+FuncDecl :  RetType ID LPAREN Formals RPAREN
+            { addFuncToSymTable($2->getTypeValue(), $1->getTypeName(), $4->getListTypeName(), yylineno); }
+            OpenScopeM
+            { addFuncArgsToSymTable($4->getListTypeName(), $4->getListNames(), yylineno); }
+            LBRACE Statements RBRACE CloseScopeM {}
 ;
-Formals : FormalsList                                                       { printProductionRule(8); }
-          | /*epsilon*/                                                     { printProductionRule(7); }
+
+RetType : Type                                                              { $$ = new STRetType($1->getTypeName()); }
+          | VOID                                                            { $$ = new STRetType("VOID"); }
 ;
-FormalsList : FormalDecl                                                    { printProductionRule(9); }
-              | FormalDecl COMMA FormalsList                                { printProductionRule(10); }
+Formals : FormalsList                                                       { $$ = $1; }
+          | /*epsilon*/                                                     { $$ = new STFormalsList();}
 ;
-FormalDecl : Type ID                                                        { printProductionRule(11); }
+FormalsList : FormalDecl                                                    { $$ = new STFormalsList($1->getTypeName(), $1->getTypeValue());  }
+              | FormalDecl COMMA FormalsList                                { $$ = new STFormalsList($1->getTypeName(), $3->getListTypeName(), $1->getTypeValue(), $3->getListNames()); }
 ;
-Statements : Statement                                                      { printProductionRule(12); }
-             | Statements Statement                                         { printProductionRule(13); }
+FormalDecl : Type ID                                                        { $$ = new STFormalDecl($1->getTypeName(), $2->getTypeValue()); }
 ;
-Statement : LBRACE Statements RBRACE                                        { printProductionRule(14); }
-            | Type ID SC                                                    { printProductionRule(15); }
-            | Type ID ASSIGN Exp SC                                         { printProductionRule(16); }
-            | AUTO ID ASSIGN Exp SC                                         { printProductionRule(17); }
-            | ID ASSIGN Exp SC                                              { printProductionRule(18); }
-            | Call SC                                                       { printProductionRule(19); }
-            | RETURN SC                                                     { printProductionRule(20); }
-            | RETURN Exp SC                                                 { printProductionRule(21); }
-            | IF LPAREN Exp RPAREN Statement                                { printProductionRule(22); }
-            | IF LPAREN Exp RPAREN Statement ELSE Statement                 { printProductionRule(23); }
-            | WHILE LPAREN Exp RPAREN Statement                             { printProductionRule(24); }
-            | BREAK SC                                                      { printProductionRule(25); }
-            | CONTINUE SC                                                   { printProductionRule(26); }
+
+Statements : Statement                                                      { }
+             | Statements Statement                                         { }
 ;
-Call : ID LPAREN ExpList RPAREN                                             { printProductionRule(27); }
-       | ID LPAREN RPAREN                                                   { printProductionRule(28); }
+
+Statement : OpenScopeM LBRACE Statements RBRACE CloseScopeM                 { }
+            | Type ID SC                                                    { addIDToSymTable($2->getTypeValue(), $1->getTypeName(), yylineno); }
+            | Type ID ASSIGN Exp SC                                         {
+                                                                                addIDToSymTable($2->getTypeValue(), $1->getTypeName(), yylineno);
+                                                                                checkValidAssign($1->getTypeName(), $4->getTypeName(), yylineno);
+                                                                            }
+            | AUTO ID ASSIGN Exp SC                                         {
+                                                                                SemTypeName exp_type = $4->getTypeName();
+                                                                                //if (exp_type == "FUNC") exp_type = $4->getRetTypeName();
+                                                                                if (exp_type == "VOID" || exp_type == "STRING") { output::errorMismatch(yylineno); exit(0); }
+                                                                                addIDToSymTable($2->getTypeValue(), exp_type, yylineno);
+                                                                                //checkValidAssign($2->getTypeName(), $4->getTypeName(), yylineno);
+                                                                            }
+            | ID ASSIGN Exp SC                                              {
+                                                                                SemTypeName id_type = checkIDInSymTable($1->getTypeValue(), yylineno);
+                                                                                checkValidAssign(id_type, $3->getTypeName(), yylineno);
+                                                                            }
+            | Call SC                                                       { }
+            | RETURN SC                                                     { checkRetVal("VOID", yylineno); }
+            | RETURN Exp SC                                                 { checkRetVal($2->getTypeName(), yylineno); }
+            | IF LPAREN Exp RPAREN
+                { checkType($3->getTypeName(), "BOOL", yylineno);
+                checkType($3->getTypeName(), "BOOL", yylineno); }
+                OpenScopeM Statement CloseScopeM IFELSEM
+            | WHILE LPAREN Exp RPAREN
+                { checkType($3->getTypeName(), "BOOL", yylineno);
+                while_counter++; }
+                OpenScopeM Statement                                        {
+                                                                                while_counter--;
+                                                                                closeScope();
+                                                                            };
+            | BREAK SC                                                      { checkInWhile('B', yylineno); }
+            | CONTINUE SC                                                   { checkInWhile('C', yylineno); }
 ;
-ExpList : Exp                                                               { printProductionRule(29); }
-          | Exp COMMA ExpList                                               { printProductionRule(30); }
+
+IFELSEM : ELSE OpenScopeM Statement CloseScopeM                             { };
+          | /*epsilon*/                                                     %prec ASSIGN { };
+
+CloseScopeM : /*epsilon*/                                                   { closeScope(); };
 ;
-Type : INT                                                                  { printProductionRule(31); }
-       | BYTE                                                               { printProductionRule(32); }
-       | BOOL                                                               { printProductionRule(33); }
+
+OpenScopeM : /*epsilon*/                                                    { openScope(); };
 ;
-Exp : LPAREN Exp RPAREN                                                     { printProductionRule(34); }
-      | Exp BINOP_ADD Exp                                                   { printProductionRule(35); }
-      | Exp BINOP_SUB Exp                                                   { printProductionRule(35); }
-      | Exp BINOP_MUL Exp                                                   { printProductionRule(35); }
-      | Exp BINOP_DIV Exp                                                   { printProductionRule(35); }
-      | ID                                                                  { printProductionRule(36); }
-      | Call                                                                { printProductionRule(37); }
-      | NUM                                                                 { printProductionRule(38); }
-      | NUM B                                                               { printProductionRule(39); }
-      | STRING                                                              { printProductionRule(40); }
-      | TRUE                                                                { printProductionRule(41); }
-      | FALSE                                                               { printProductionRule(42); }
-      | NOT Exp                                                             { printProductionRule(43); }
-      | Exp AND Exp                                                         { printProductionRule(44); }
-      | Exp OR Exp                                                          { printProductionRule(45); }
-      | Exp RELOP Exp                                                       { printProductionRule(46); }
-      | LPAREN Type RPAREN Exp                                              { printProductionRule(47); }
+
+Call : ID LPAREN ExpList RPAREN                                             {
+                                                                                SemTypeName ret_type = checkFuncInSymTable($1->getTypeValue(), yylineno);
+                                                                                checkFuncArgsInTable($1->getTypeValue(), yylineno, $3->getListTypeName());
+                                                                                $$ = new STCall(ret_type);
+                                                                            }
+       | ID LPAREN RPAREN                                                   {
+                                                                                SemTypeName ret_type = checkFuncInSymTable($1->getTypeValue(), yylineno);
+                                                                                checkFuncArgsInTable($1->getTypeValue(), yylineno, vector<SemTypeName>());
+                                                                                $$ = new STCall(ret_type);
+                                                                            }
+;
+
+ExpList : Exp                                                               { $$ = new STExpList($1->getTypeName()); }
+          | Exp COMMA ExpList                                               { $$ = new STExpList($1->getTypeName(), $3->getListTypeName()); }
+;
+
+Type : INT                                                                  { $$ = new STType("INT"); }
+       | BYTE                                                               { $$ = new STType("BYTE"); }
+       | BOOL                                                               { $$ = new STType("BOOL"); }
+;
+
+Exp : LPAREN Exp RPAREN                                                     { $$ = new STExp($2->getTypeName()); }
+      | Exp BINOP_ADD Exp                                                   {
+                                                                                checkTypeNumeric($1->getTypeName(), yylineno);
+                                                                                checkTypeNumeric($3->getTypeName(), yylineno);
+                                                                                $$ = new STExp(checkBINOPResType($1->getTypeName(), $3->getTypeName()));
+                                                                            }
+      | Exp BINOP_SUB Exp                                                   {
+                                                                                checkTypeNumeric($1->getTypeName(), yylineno);
+                                                                                checkTypeNumeric($3->getTypeName(), yylineno);
+                                                                                $$ = new STExp(checkBINOPResType($1->getTypeName(), $3->getTypeName()));
+                                                                            }
+      | Exp BINOP_MUL Exp                                                   {
+                                                                                checkTypeNumeric($1->getTypeName(), yylineno);
+                                                                                checkTypeNumeric($3->getTypeName(), yylineno);
+                                                                                $$ = new STExp(checkBINOPResType($1->getTypeName(), $3->getTypeName()));
+                                                                            }
+      | Exp BINOP_DIV Exp                                                   {
+                                                                                checkTypeNumeric($1->getTypeName(), yylineno);
+                                                                                checkTypeNumeric($3->getTypeName(), yylineno);
+                                                                                $$ = new STExp(checkBINOPResType($1->getTypeName(), $3->getTypeName()));
+                                                                            }
+      | ID                                                                  {
+                                                                                SemTypeName id_type = checkIDInSymTable($1->getTypeValue(), yylineno);
+                                                                                $$ = new STExp(id_type);
+                                                                            }
+      | Call                                                                { $$ = new STExp($1->getTypeName()); }
+      | NUM                                                                 { $$ = new STExp("INT", $1->getTypeValue()); }
+      | NUM B                                                               {
+                                                                                checkBValid($1->getTypeValue(), yylineno);
+                                                                                $$ = new STExp("BYTE", $1->getTypeValue());
+                                                                            }
+      | STRING                                                              { $$ = new STExp("STRING"); }
+      | TRUE                                                                { $$ = new STExp("BOOL"); }
+      | FALSE                                                               { $$ = new STExp("BOOL"); }
+      | NOT Exp                                                             {
+                                                                                checkType($2->getTypeName(), "BOOL", yylineno);
+                                                                                $$ = new STExp("BOOL");
+                                                                            }
+      | Exp AND Exp                                                         {
+                                                                                checkType($1->getTypeName(), "BOOL", yylineno);
+                                                                                checkType($3->getTypeName(), "BOOL", yylineno);
+                                                                                $$ = new STExp("BOOL");
+                                                                            }
+      | Exp OR Exp                                                          {
+                                                                                checkType($1->getTypeName(), "BOOL", yylineno);
+                                                                                checkType($3->getTypeName(), "BOOL", yylineno);
+                                                                                $$ = new STExp("BOOL");
+                                                                            }
+      | Exp RELOP Exp                                                       {
+                                                                                checkTypeNumeric($1->getTypeName(), yylineno);
+                                                                                checkTypeNumeric($3->getTypeName(), yylineno);
+                                                                                $$ = new STExp("BOOL");
+                                                                            }
+      | LPAREN Type RPAREN Exp                                              {
+                                                                                checkTypeNumeric($2->getTypeName(), yylineno);
+                                                                                checkTypeNumeric($4->getTypeName(), yylineno);
+                                                                                $$ = new STExp($2->getTypeName());
+                                                                            }
 ;
 
 %%

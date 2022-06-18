@@ -2,6 +2,7 @@
 
 /* Declarations section */
 #include <stdio.h>
+#include "semanticTypes.h"
 #include "hw3_output.hpp"
 #include "parser.tab.hpp"
 
@@ -48,9 +49,9 @@ continue											return CONTINUE;
 \*  											    return BINOP_MUL;
 \/  											    return BINOP_DIV;
 
-[a-zA-Z][a-zA-Z0-9]*						        return ID;
+[a-zA-Z][a-zA-Z0-9]*						        yylval = new STID("ID", yytext); return ID;
 
-0|[1-9][0-9]*         					            return NUM;
+0|[1-9][0-9]*         					            yylval = new STNum("NUM", yytext); return NUM;
 \"([^\n\r\"\\]|\\[rnt"\\])+\"					    return STRING;
 
 \/\/[^\r\n]*[\r|\n|\r\n]?                           ; /* ignore comment */
