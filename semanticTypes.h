@@ -218,7 +218,7 @@ class STString : public SemType {
 public:
     stringCreator _string;
     string type_value;
-    STString(stringCreator t_name, string t_val) : _string(t_name), type_value(t_val) {};
+    STString(string t_val) : type_value(t_val) {};
     string getStringName() override { return _string.name; }
     string getTypeValue() override { return type_value; }
 };

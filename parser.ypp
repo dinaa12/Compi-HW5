@@ -170,7 +170,7 @@ Exp : LPAREN Exp RPAREN                                                     { $$
                                                                                 checkBValid($1->getTypeValue(), yylineno);
                                                                                 $$ = new STExp("BYTE", $1->getTypeValue(), EXP_TO_NUM_B);
                                                                             }
-      | STRING                                                              { $$ = new STExp("STRING"); }
+      | STRING                                                              { $$ = new STExp("STRING", "", EXP_TO_STRING, $1); }
       | TRUE                                                                { $$ = new STExp("BOOL", "", EXP_TO_TRUE); }
       | FALSE                                                               { $$ = new STExp("BOOL", "", EXP_TO_FALSE); }
       | NOT Exp                                                             {
