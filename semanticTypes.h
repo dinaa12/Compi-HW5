@@ -35,7 +35,23 @@ enum DERIVATION_RULE {
     EXP_TO_EXP_OR_EXP,
     EXP_TO_EXP_RELOP_COMPARE_EXP,
     EXP_TO_EXP_RELOP_EQUAL_EXP,
-    EXP_TO_LPAREN_TYPE_RPAREN_EXP
+    EXP_TO_LPAREN_TYPE_RPAREN_EXP,
+    STATEMENT_TO_STATEMENTS,
+    STATEMENT_TO_TYPE_ID,
+    STATEMENT_TO_TYPE_ID_ASSIGN_EXP,
+    STATEMENT_TO_AUTO_ID_ASSIGN_EXP,
+    STATEMENT_TO_ID_ASSIGN_EXP,
+    STATEMENT_TO_CALL,
+    STATEMENT_TO_RETURN,
+    STATEMENT_TO_RETURN_EXP,
+    STATEMETN_TO_IF,    
+    STATEMENT_TO_WHILE,
+    STATEMENT_TO_BREAK,
+    STATEMENT_TO_CONTINUE,
+
+    STATEMENTS_TO_STATEMENT,
+    STATEMENTS_TO_STATEMENTS_STATEMENT
+
 };
 
 class SemType {
@@ -48,9 +64,12 @@ public:
     virtual vector<string> getListNames() {};
     virtual Reg* getReg() {}; // TODO: implement in all classes
     virtual string getLabel() {};
+    virtual bool getIsEpsilon() {};
     virtual vector<pair<int, BranchLabelIndex>> getTrueList() {};
     virtual vector<pair<int, BranchLabelIndex>> getFalseList() {};
     virtual vector<pair<int, BranchLabelIndex>> getNextList() {};
+    virtual vector<pair<int, BranchLabelIndex>> getBreakList() {};
+    virtual vector<pair<int, BranchLabelIndex>> getContinueList() {};
     virtual ~SemType() = default;
 };
 
@@ -225,17 +244,54 @@ public:
 
 class STM : public SemType {
 public:
-    SemTypeName type_name;
+    string label;
     STM();
-    SemTypeName getLabel() override { return type_name; }
+    string getLabel() override { return label; }
 };
-
 
 class STN : public SemType {
 public:
     vector<pair<int,BranchLabelIndex>> next_list;
     STN();
     vector<pair<int,BranchLabelIndex>> getNextList() override { return next_list; }
+};
+
+class STIfElse : public SemType {
+private:
+    vector<pair<int,BranchLabelIndex>> break_list;
+    vector<pair<int,BranchLabelIndex>> continue_list;
+    vector<pair<int,BranchLabelIndex>> next_list;
+    string label;
+    bool is_epsilon;
+public:
+    STIfElse(SemType* s1 = nullptr, SemType* s2 = nullptr, SemType* s3 = nullptr, bool is_epsilon = true);
+    vector<pair<int,BranchLabelIndex>> getBreakList() override { return break_list; }
+    vector<pair<int,BranchLabelIndex>> getContinueList() override { return continue_list; }
+    vector<pair<int,BranchLabelIndex>> getNextList() override { return next_list; }
+    string getLabel() override { return label; }
+    bool getIsEpsilon() override {return is_epsilon; }
+};
+
+class STStatement : public SemType {
+public:
+    vector<pair<int,BranchLabelIndex>> break_list;
+    vector<pair<int,BranchLabelIndex>> continue_list;
+    vector<pair<int,BranchLabelIndex>> next_list;
+
+    STStatement(DERIVATION_RULE d_rule = NONE, SemType* s1 = nullptr, SemType* s2 = nullptr, SemType* s3 = nullptr, SemType* s4 = nullptr, SemType* s5 = nullptr, SemType* s6 = nullptr);
+    vector<pair<int, BranchLabelIndex>> getBreakList() override { return break_list; }
+    vector<pair<int, BranchLabelIndex>> getContinueList() override { return continue_list; }
+    vector<pair<int, BranchLabelIndex>> getNextList() override { return next_list; }
+};
+
+class STStatements : public SemType {
+public:
+    vector<pair<int,BranchLabelIndex>> break_list;
+    vector<pair<int,BranchLabelIndex>> continue_list;
+
+    STStatements(DERIVATION_RULE d_rule = NONE, SemType* s1 = nullptr, SemType* s2 = nullptr, SemType* s3 = nullptr);
+    vector<pair<int, BranchLabelIndex>> getBreakList() override { return break_list; }
+    vector<pair<int, BranchLabelIndex>> getContinueList() override { return continue_list; }
 };
 
 #endif //HW3_SEMANTICTYPES_H

@@ -70,15 +70,19 @@ FormalsList : FormalDecl                                                    { $$
 FormalDecl : Type ID                                                        { $$ = new STFormalDecl($1->getTypeName(), $2->getTypeValue()); }
 ;
 
-Statements : Statement                                                      { }
-             | Statements Statement                                         { }
+Statements : Statement                                                      { $$ = new STStatements(STATEMENTS_TO_STATEMENT, $1); }
+             | Statements Statement                                         { $$ = new STStatements(STATEMENTS_TO_STATEMENTS_STATEMENT, $1, $2); }
 ;
 
-Statement : OpenScopeM LBRACE Statements RBRACE CloseScopeM                 { }
-            | Type ID SC                                                    { addIDToSymTable($2->getTypeValue(), $1->getTypeName(), yylineno); }
+Statement : OpenScopeM LBRACE Statements RBRACE CloseScopeM                 { $$ = new STStatement(STATEMENT_TO_STATEMENTS, $3); }
+            | Type ID SC                                                    { 
+                                                                                addIDToSymTable($2->getTypeValue(), $1->getTypeName(), yylineno);
+                                                                                $$ = new STStatement(STATEMENT_TO_TYPE_ID, $2);
+                                                                            }
             | Type ID ASSIGN Exp SC                                         {
                                                                                 addIDToSymTable($2->getTypeValue(), $1->getTypeName(), yylineno);
                                                                                 checkValidAssign($1->getTypeName(), $4->getTypeName(), yylineno);
+                                                                                $$ = new STStatement(STATEMENT_TO_ID_ASSIGN_EXP, $2, $4);
                                                                             }
             | AUTO ID ASSIGN Exp SC                                         {
                                                                                 SemTypeName exp_type = $4->getTypeName();
@@ -86,31 +90,47 @@ Statement : OpenScopeM LBRACE Statements RBRACE CloseScopeM                 { }
                                                                                 if (exp_type == "VOID" || exp_type == "STRING") { output::errorMismatch(yylineno); exit(0); }
                                                                                 addIDToSymTable($2->getTypeValue(), exp_type, yylineno);
                                                                                 //checkValidAssign($2->getTypeName(), $4->getTypeName(), yylineno);
+                                                                                $$ = new STStatement(STATEMENT_TO_ID_ASSIGN_EXP, $2, $4);
                                                                             }
             | ID ASSIGN Exp SC                                              {
                                                                                 SemTypeName id_type = checkIDInSymTable($1->getTypeValue(), yylineno);
                                                                                 checkValidAssign(id_type, $3->getTypeName(), yylineno);
+                                                                                $$ = new STStatement(STATEMENT_TO_ID_ASSIGN_EXP, $1, $3);
                                                                             }
-            | Call SC                                                       { }
-            | RETURN SC                                                     { checkRetVal("VOID", yylineno); }
-            | RETURN Exp SC                                                 { checkRetVal($2->getTypeName(), yylineno); }
-            | IF LPAREN Exp RPAREN
+            | Call SC                                                       { $$ = new STStatement(STATEMENT_TO_CALL); }
+            | RETURN SC                                                     { 
+                                                                                checkRetVal("VOID", yylineno);
+                                                                                $$ = new STStatement(STATEMENT_TO_RETURN); 
+                                                                            }
+            | RETURN Exp SC                                                 { 
+                                                                                checkRetVal($2->getTypeName(), yylineno);
+                                                                                $$ = new STStatement(STATEMENT_TO_RETURN_EXP, $2);
+                                                                            }
+            | IF LPAREN Exp RPAREN M
                 { checkType($3->getTypeName(), "BOOL", yylineno);
                 checkType($3->getTypeName(), "BOOL", yylineno); }
-                OpenScopeM Statement CloseScopeM IFELSEM
-            | WHILE LPAREN Exp RPAREN
-                { checkType($3->getTypeName(), "BOOL", yylineno);
+                OpenScopeM Statement CloseScopeM IFELSEM                    { $$ = new STStatement(STATEMETN_TO_IF, $3, $5, $8, $10); }
+            | N WHILE LPAREN M Exp RPAREN M
+                { checkType($5->getTypeName(), "BOOL", yylineno);
                 while_counter++; }
                 OpenScopeM Statement                                        {
                                                                                 while_counter--;
                                                                                 closeScope();
-                                                                            };
-            | BREAK SC                                                      { checkInWhile('B', yylineno); }
-            | CONTINUE SC                                                   { checkInWhile('C', yylineno); }
+                                                                                $$ = new STStatement(STATEMENT_TO_WHILE, $1, $4, $5, $7, $10);
+                                                                            }
+            | BREAK SC                                                      { 
+                                                                                checkInWhile('B', yylineno);
+                                                                                $$ = new STStatement(STATEMENT_TO_BREAK); 
+                                                                            }
+            | CONTINUE SC                                                   { 
+                                                                                checkInWhile('C', yylineno);
+                                                                                $$ = new STStatement(STATEMENT_TO_CONTINUE);
+                                                                            }
 ;
 
-IFELSEM : ELSE OpenScopeM Statement CloseScopeM                             { };
-          | /*epsilon*/                                                     %prec ASSIGN { };
+IFELSEM : ELSE OpenScopeM N M Statement CloseScopeM                         { $$ = new STIfElse($3, $4, $5, false); }
+          | /*epsilon*/                                                     { $$ = new STIfElse(); }
+                                                                            %prec ASSIGN;
 
 CloseScopeM : /*epsilon*/                                                   { closeScope(); };
 ;

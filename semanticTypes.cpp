@@ -11,9 +11,9 @@ static string sizeOfType(SemTypeName type) {
     return "void";
 }
 
-STM::STM() : type_name(code_buff.genLabel()) {}
+STM::STM() : label(code_buff.genLabel()) {}
 
-STN::STN() : next_list(vector<pair<int,BranchLabelIndex>>()) {
+STN::STN() : next_list(std::vector<pair<int,BranchLabelIndex>>()) {
     pair<int,BranchLabelIndex> new_pair;
     new_pair.first = code_buff.emit("br label @");
     new_pair.second = FIRST;
@@ -21,7 +21,7 @@ STN::STN() : next_list(vector<pair<int,BranchLabelIndex>>()) {
 }
 
 STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* s1, SemType* s2, SemType* s3) :
-    type_name(t_name), type_value(t_val), reg(Reg()), true_list(std::vector<pair<int,BranchLabelIndex>>()), false_list(std::vector<pair<int,BranchLabelIndex>>()), next_list(std::vector<pair<int,BranchLabelIndex>>()) {
+    type_name(t_name), type_value(t_val), reg(Reg()), true_list(vector<pair<int,BranchLabelIndex>>()), false_list(vector<pair<int,BranchLabelIndex>>()), next_list(vector<pair<int,BranchLabelIndex>>()) {
 
     string curr_code;
     string global_code;
@@ -31,7 +31,9 @@ STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* 
             curr_code = reg.name + " = add " + sizeOfType(type_name) + " " + s1->getReg()->name + ", 0";
             code_buff.emit(curr_code);
         }
-        // TODO: add truelist faselist nextlist ???????
+        true_list = s1->getTrueList();
+        false_list = s1->getFalseList();
+        next_list = s1->getNextList();
     }
     else if (d_rule == EXP_TO_EXP_BINOP_ADD_EXP) {
         Reg* reg_operand1 = s1->getReg();
@@ -52,7 +54,9 @@ STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* 
         }
         curr_code = reg.name + " = add " + sizeOfType(type_name) + " " + reg_operand1->name + ", " + reg_operand2->name;
         code_buff.emit(curr_code);
-        // TODO: add truelist faselist nextlist ???????
+        true_list = CodeBuffer::merge(s1->getTrueList(), s2->getTrueList());
+        false_list = CodeBuffer::merge(s1->getFalseList(), s2->getFalseList());
+        next_list = CodeBuffer::merge(s1->getNextList(), s2->getNextList());
     }
     else if (d_rule == EXP_TO_EXP_BINOP_SUB_EXP) {
         Reg* reg_operand1 = s1->getReg();
@@ -74,7 +78,9 @@ STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* 
 
         curr_code = reg.name + " = sub " + sizeOfType(type_name) + " " + reg_operand1->name + ", " + reg_operand2->name;
         code_buff.emit(curr_code);
-        // TODO: add truelist faselist nextlist ???????
+        true_list = CodeBuffer::merge(s1->getTrueList(), s2->getTrueList());
+        false_list = CodeBuffer::merge(s1->getFalseList(), s2->getFalseList());
+        next_list = CodeBuffer::merge(s1->getNextList(), s2->getNextList());
     }
     else if (d_rule == EXP_TO_EXP_BINOP_MUL_EXP) {
         Reg* reg_operand1 = s1->getReg();
@@ -96,7 +102,9 @@ STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* 
 
         curr_code = reg.name + " = mul " + sizeOfType(type_name) + " " + reg_operand1->name + ", " + reg_operand2->name;
         code_buff.emit(curr_code);
-        // TODO: add truelist faselist nextlist ???????
+        true_list = CodeBuffer::merge(s1->getTrueList(), s2->getTrueList());
+        false_list = CodeBuffer::merge(s1->getFalseList(), s2->getFalseList());
+        next_list = CodeBuffer::merge(s1->getNextList(), s2->getNextList());
     }
     else if (d_rule == EXP_TO_EXP_BINOP_DIV_EXP) {
         Reg* reg_operand1 = s1->getReg();
@@ -144,7 +152,9 @@ STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* 
         }
         curr_code += sizeOfType(type_name) + " " + reg_operand1->name + ", " + reg_operand2->name;
         code_buff.emit(curr_code);
-        // TODO: add truelist faselist nextlist ???????
+        true_list = CodeBuffer::merge(s1->getTrueList(), s2->getTrueList());
+        false_list = CodeBuffer::merge(s1->getFalseList(), s2->getFalseList());
+        next_list = CodeBuffer::merge(s1->getNextList(), s2->getNextList());
     }
     else if (d_rule == EXP_TO_ID) {
         int id_offset = getEntryByName(s1->getTypeValue())->offset;
@@ -335,3 +345,187 @@ STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* 
     }
 }
 
+STIfElse::STIfElse(SemType* s1, SemType* s2, SemType* s3, bool is_epsilon) :
+                     break_list(vector<pair<int,BranchLabelIndex>>()),
+                     continue_list(vector<pair<int,BranchLabelIndex>>()),
+                     next_list(vector<pair<int,BranchLabelIndex>>()),                     
+                     label(string()),
+                     is_epsilon(is_epsilon) {
+    if (s1 && s2 && s3) {
+        label = s2->getLabel();
+        next_list = CodeBuffer::merge(s1->getNextList(), s3->getNextList());
+        continue_list = s3->getContinueList();
+        break_list = s3->getBreakList();
+    }
+}
+
+STStatement::STStatement(DERIVATION_RULE d_rule, SemType* s1, SemType* s2, SemType* s3, SemType* s4, SemType* s5, SemType* s6) :
+    break_list(vector<pair<int,BranchLabelIndex>>()), continue_list(vector<pair<int,BranchLabelIndex>>()), next_list(vector<pair<int,BranchLabelIndex>>())
+{
+
+    string curr_code;
+    string global_code;
+
+    if (d_rule == STATEMENT_TO_STATEMENTS) {
+        break_list = s1->getBreakList();
+        continue_list = s1->getContinueList();
+    }
+    else if (d_rule == STATEMENT_TO_TYPE_ID) {
+        Reg reg1, reg2;
+        int id_offset = getEntryByName(s1->getTypeValue())->offset;
+        curr_code = reg1.name + " = getelementptr [50 x i32], [50 x i32]* " + local_variables_reg.name + ", i32 0, i32 " + to_string(id_offset);
+        code_buff.emit(curr_code);
+        curr_code = "store i32 0, i32* " + reg1.name;
+        code_buff.emit(curr_code);
+    }
+    else if (d_rule == STATEMENT_TO_TYPE_ID_ASSIGN_EXP) { // ?
+        
+    }
+    else if (d_rule == STATEMENT_TO_AUTO_ID_ASSIGN_EXP) { // ?
+        
+    }
+    else if (d_rule == STATEMENT_TO_ID_ASSIGN_EXP) {
+        Reg reg1, reg2;
+        if (s2->getTypeName() != "BOOL") {
+            int id_offset = getEntryByName(s1->getTypeValue())->offset;
+            code_buff.emit(reg1.name + " = getelementptr [50 x i32], [50 x i32]* " + local_variables_reg.name + ", i32 0, i32 " + to_string(id_offset));
+            Reg* exp_to_assign_reg = s2->getReg();
+            if (sizeOfType(s2->getTypeName()) != "i32") {
+                Reg new_reg;
+                code_buff.emit(new_reg.name + " = zext " + sizeOfType(s2->getTypeName()) + " " + exp_to_assign_reg->name + " to i32");
+                exp_to_assign_reg = &new_reg;
+            }
+            code_buff.emit("store i32 " + exp_to_assign_reg->name + ", i32* " + reg1.name);
+        }
+        else { // the exp to assign is bool
+            string true_label = code_buff.genLabel();
+            code_buff.bpatch(s2->getTrueList(), true_label);
+            int br_true_label_cmd_addr = code_buff.emit("br label @");
+            pair<int,BranchLabelIndex> true_label_list_item;
+            true_label_list_item.first = br_true_label_cmd_addr;
+            true_label_list_item.second = FIRST;
+
+            string false_label = code_buff.genLabel();
+            code_buff.bpatch(s2->getFalseList(), false_label);
+            int br_false_label_cmd_addr = code_buff.emit("br label @");
+            pair<int,BranchLabelIndex> false_label_list_item;
+            false_label_list_item.first = br_false_label_cmd_addr;
+            false_label_list_item.second = FIRST;
+
+            vector<pair<int,BranchLabelIndex>> curr_list_item_to_patch;
+            curr_list_item_to_patch.push_back(true_label_list_item);
+            curr_list_item_to_patch.push_back(false_label_list_item);
+            string end_label = code_buff.genLabel();
+            code_buff.bpatch(curr_list_item_to_patch, end_label);
+
+            code_buff.emit(reg1.name + " = phi i32 [1, %" + true_label + "], [0, %" + false_label + "]");
+            int id_offset = getEntryByName(s1->getTypeValue())->offset;
+            code_buff.emit(reg2.name + " = getelementptr [50 x i32], [50 x i32]* " + local_variables_reg.name + ", i32 0, i32 " + to_string(id_offset));
+            code_buff.emit("store i32 " + reg1.name + ", i32* " + reg2.name);
+        }
+    }
+    else if (d_rule == STATEMENT_TO_CALL) {
+        // Nothing to do here
+    }
+    else if (d_rule == STATEMENT_TO_RETURN) {
+        code_buff.emit("ret void");
+        code_buff.genLabel();
+    }
+    else if (d_rule == STATEMENT_TO_RETURN_EXP) {
+        if (s1->getTypeName() == "BOOL") { // the exp to return is BOOL
+            string true_label = code_buff.genLabel();
+            code_buff.bpatch(s1->getTrueList(), true_label);
+            int br_true_label_cmd_addr = code_buff.emit("br label @");
+            pair<int,BranchLabelIndex> true_label_list_item;
+            true_label_list_item.first = br_true_label_cmd_addr;
+            true_label_list_item.second = FIRST;
+
+            string false_label = code_buff.genLabel();
+            code_buff.bpatch(s1->getFalseList(), false_label);
+            int br_false_label_cmd_addr = code_buff.emit("br label @");
+            pair<int,BranchLabelIndex> false_label_list_item;
+            false_label_list_item.first = br_false_label_cmd_addr;
+            false_label_list_item.second = FIRST;
+
+            vector<pair<int,BranchLabelIndex>> curr_list_item_to_patch;
+            curr_list_item_to_patch.push_back(true_label_list_item);
+            curr_list_item_to_patch.push_back(false_label_list_item);
+            string end_label = code_buff.genLabel();
+            code_buff.bpatch(curr_list_item_to_patch, end_label);
+
+            code_buff.emit(s1->getReg()->name + " = phi i1 [1, %" + true_label + "], [0, %" + false_label + "]");
+        }
+        code_buff.emit("ret " + sizeOfType(s1->getTypeName()) + " " + s1->getReg()->name);
+        code_buff.genLabel();
+    }
+    else if (d_rule == STATEMETN_TO_IF) {
+        if (s4->getIsEpsilon()) { // only if statement
+            code_buff.bpatch(s1->getTrueList(), s2->getLabel());
+            next_list = CodeBuffer::merge(s1->getFalseList(), s3->getNextList());
+            int br_cmd_addr = code_buff.emit("br label @");
+            pair<int,BranchLabelIndex> br_cmd_list_item;
+            br_cmd_list_item.first = br_cmd_addr;
+            br_cmd_list_item.second = FIRST;
+            next_list = CodeBuffer::merge(next_list, CodeBuffer::makelist(br_cmd_list_item));
+            string end_label = code_buff.genLabel();
+            code_buff.bpatch(next_list, end_label);
+            continue_list = s3->getContinueList();
+            break_list = s3->getBreakList();
+        }
+        else { // if else statement
+            code_buff.bpatch(s1->getTrueList(), s2->getLabel());
+            code_buff.bpatch(s1->getFalseList(), s4->getLabel());
+            next_list = CodeBuffer::merge(s3->getNextList(), s4->getNextList());
+            int br_cmd_addr = code_buff.emit("br label @");
+            pair<int,BranchLabelIndex> br_cmd_list_item;
+            br_cmd_list_item.first = br_cmd_addr;
+            br_cmd_list_item.second = FIRST;
+            next_list = CodeBuffer::merge(next_list, CodeBuffer::makelist(br_cmd_list_item));
+            string end_label = code_buff.genLabel();
+            code_buff.bpatch(next_list, end_label);
+            continue_list = CodeBuffer::merge(s3->getContinueList(), s4->getContinueList());
+            break_list = CodeBuffer::merge(s3->getBreakList(), s4->getBreakList());
+        }
+    }
+    else if (d_rule == STATEMENT_TO_WHILE) {
+        // s1: N, s2: M, s3: Exp, s4: M, s5: Statement
+        code_buff.bpatch(s1->getNextList(), s2->getLabel());
+        code_buff.bpatch(s3->getTrueList(), s4->getLabel());
+        next_list = s3->getFalseList();
+        code_buff.emit("br label %" + s2->getLabel());
+        string end_label = code_buff.genLabel();
+        code_buff.bpatch(next_list, end_label);
+        code_buff.bpatch(s5->getContinueList(), s2->getLabel());
+        code_buff.bpatch(s5->getBreakList(), end_label);
+    }
+    else if (d_rule == STATEMENT_TO_BREAK) {
+        int br_cmd_addr = code_buff.emit("br label @");
+        code_buff.genLabel();
+        pair<int,BranchLabelIndex> break_br_list_item;
+        break_br_list_item.first = br_cmd_addr;
+        break_br_list_item.second = FIRST;
+        break_list = CodeBuffer::makelist(break_br_list_item);
+    }
+    else if (d_rule == STATEMENT_TO_CONTINUE) {
+        int br_cmd_addr = code_buff.emit("br label @");
+        code_buff.genLabel();
+        pair<int,BranchLabelIndex> continue_br_list_item;
+        continue_br_list_item.first = br_cmd_addr;
+        continue_br_list_item.second = FIRST;
+        continue_list = CodeBuffer::makelist(continue_br_list_item);
+    }
+}
+
+STStatements::STStatements(DERIVATION_RULE d_rule, SemType* s1, SemType* s2, SemType* s3) : 
+    break_list(vector<pair<int,BranchLabelIndex>>()), continue_list(vector<pair<int,BranchLabelIndex>>())
+{
+    if (d_rule == STATEMENTS_TO_STATEMENT) {
+        break_list = s1->getBreakList();
+        continue_list = s1->getContinueList();
+    }
+    else if (d_rule == STATEMENTS_TO_STATEMENTS_STATEMENT) {
+        break_list = CodeBuffer::merge(s1->getBreakList(), s2->getBreakList());
+        continue_list = CodeBuffer::merge(s1->getContinueList(), s2->getContinueList());
+
+    }
+}
