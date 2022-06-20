@@ -1,4 +1,5 @@
 #include "semanticTypes.h"
+#include "parserFuncs.h"
 
 CodeBuffer& code_buff = CodeBuffer::instance();
 
@@ -224,13 +225,101 @@ STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* 
         false_list = s2->getFalseList();
     }
     else if (d_rule == EXP_TO_EXP_RELOP_COMPARE_EXP) {
+        Reg* reg_operand1 = s1->getReg();
+        Reg* reg_operand2 = s2->getReg();
+        Reg cmp_reg;
 
+        // check operands size
+        if (s1->getTypeName() != s2->getTypeName()) {
+            if (s1->getTypeName() == "BYTE") {
+                Reg extended_reg;
+                code_buff.emit(extended_reg.name + " = zext i8 " + reg_operand1->name + " to i32");
+                reg_operand1 = &extended_reg;
+            }
+            else if (s2->getTypeName() == "BYTE") {
+                Reg extended_reg;
+                code_buff.emit(extended_reg.name + " = zext i8 " + reg_operand2->name + " to i32");
+                reg_operand2 = &extended_reg;
+            }
+        }
+
+        curr_code = cmp_reg.name + " = icmp ";
+        if (s3->getTypeValue() == "<") {
+            curr_code += "slt ";
+        }
+        else if (s3->getTypeValue() == ">") {
+            curr_code += "sgt ";
+        }
+        else if (s3->getTypeValue() == "<=") {
+            curr_code += "sle ";
+        }
+        else { // (s3->getTypeValue() == ">=")
+            curr_code += "sge ";
+        }
+
+        curr_code += sizeOfType(checkBINOPResType(s1->getTypeName(), s2->getTypeName())) + " " + reg_operand1->name + ", " + reg_operand2->name;
+        code_buff.emit(curr_code);
+        int br_cmd_addr = code_buff.emit("br i1 " + cmp_reg.name + ", label @, label @");
+        pair<int, BranchLabelIndex> curr_list;
+        curr_list.first = br_cmd_addr;
+        curr_list.second = FIRST;
+        true_list = CodeBuffer::makelist((curr_list));
+        curr_list.second = SECOND;
+        false_list = CodeBuffer::makelist((curr_list));
     }
     else if (d_rule == EXP_TO_EXP_RELOP_EQUAL_EXP) {
+        Reg* reg_operand1 = s1->getReg();
+        Reg* reg_operand2 = s2->getReg();
+        Reg cmp_reg;
 
+        // check operands size
+        if (s1->getTypeName() != s2->getTypeName()) {
+            if (s1->getTypeName() == "BYTE") {
+                Reg extended_reg;
+                code_buff.emit(extended_reg.name + " = zext i8 " + reg_operand1->name + " to i32");
+                reg_operand1 = &extended_reg;
+            }
+            else if (s2->getTypeName() == "BYTE") {
+                Reg extended_reg;
+                code_buff.emit(extended_reg.name + " = zext i8 " + reg_operand2->name + " to i32");
+                reg_operand2 = &extended_reg;
+            }
+        }
+
+        curr_code = cmp_reg.name + " = icmp ";
+        if (s3->getTypeValue() == "!=") {
+            curr_code += "ne ";
+        }
+        else { // (s3->getTypeValue() == "==")
+            curr_code += "eq ";
+        }
+
+        curr_code += sizeOfType(checkBINOPResType(s1->getTypeName(), s2->getTypeName())) + " " + reg_operand1->name + ", " + reg_operand2->name;
+        code_buff.emit(curr_code);
+        int br_cmd_addr = code_buff.emit("br i1 " + cmp_reg.name + ", label @, label @");
+        pair<int, BranchLabelIndex> curr_list;
+        curr_list.first = br_cmd_addr;
+        curr_list.second = FIRST;
+        true_list = CodeBuffer::makelist((curr_list));
+        curr_list.second = SECOND;
+        false_list = CodeBuffer::makelist((curr_list));
     }
     else if (d_rule == EXP_TO_LPAREN_TYPE_RPAREN_EXP) {
-
+        if (sizeOfType(type_name) == sizeOfType(s1->getTypeName())) {
+            string source_op = s1->getReg()->name;
+            code_buff.emit(reg.name + " = add " + sizeOfType(type_name) + " " + source_op + ", 0");
+        }
+        else if (sizeOfType(type_name) == "i32" && sizeOfType(s1->getTypeName()) == "i8") {
+            string source_op = s1->getReg()->name;
+            code_buff.emit(reg.name + " = trunc i32 " + source_op + " to i8");
+        }
+        else if (sizeOfType(type_name) == "i8" && sizeOfType(s1->getTypeName()) == "i32") {
+            string source_op = s1->getReg()->name;
+            code_buff.emit(reg.name + " = zext i8 " + source_op + " to i32");
+        }
+    }
+    else {
+        std::cerr << "DERIVATION RULE ERROR" << std::endl;
     }
 
 }
