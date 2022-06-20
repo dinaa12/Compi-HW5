@@ -180,12 +180,12 @@ Exp : LPAREN Exp RPAREN                                                     { $$
       | Exp AND M Exp                                                       {
                                                                                 checkType($1->getTypeName(), "BOOL", yylineno);
                                                                                 checkType($4->getTypeName(), "BOOL", yylineno);
-                                                                                $$ = new STExp("BOOL", "", EXP_TO_AND_EXP, $1, $4, $3);
+                                                                                $$ = new STExp("BOOL", "", EXP_TO_EXP_AND_EXP, $1, $4, $3);
                                                                             }
       | Exp OR M Exp                                                        {
                                                                                 checkType($1->getTypeName(), "BOOL", yylineno);
                                                                                 checkType($4->getTypeName(), "BOOL", yylineno);
-                                                                                $$ = new STExp("BOOL", "", EXP_TO_OR_EXP, $1, $4, $3);
+                                                                                $$ = new STExp("BOOL", "", EXP_TO_EXP_OR_EXP, $1, $4, $3);
                                                                             }
       | Exp RELOP_COMPARE Exp                                               {
                                                                                 checkTypeNumeric($1->getTypeName(), yylineno);
