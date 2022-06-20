@@ -11,7 +11,7 @@ static string sizeOfType(SemTypeName type) {
 }
 
 STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* s1, SemType* s2, SemType* s3) :
-    type_name(t_name), type_value(t_val), reg(Reg()) {
+    type_name(t_name), type_value(t_val), reg(Reg()), true_list(std::vector<pair<int,BranchLabelIndex>>()), false_list(std::vector<pair<int,BranchLabelIndex>>()), next_list(std::vector<pair<int,BranchLabelIndex>>()) {
 
     string curr_code;
     string global_code;
@@ -214,10 +214,14 @@ STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* 
         false_list = s1->getTrueList();
     }
     else if (d_rule == EXP_TO_EXP_AND_EXP) {
-
+        code_buff.bpatch(s1->getTrueList(), "AND");
+        false_list = CodeBuffer::merge(s1->getFalseList(), s2->getFalseList());
+        true_list = s2->getTrueList();
     }
     else if (d_rule == EXP_TO_EXP_OR_EXP) {
-
+        code_buff.bpatch(s1->getFalseList(), "OR");
+        true_list = CodeBuffer::merge(s1->getTrueList(), s2->getTrueList());
+        false_list = s2->getFalseList();
     }
     else if (d_rule == EXP_TO_EXP_RELOP_COMPARE_EXP) {
 
