@@ -220,4 +220,19 @@ public:
     SemTypeName getTypeValue() override { return type_value; }
 };
 
+class STM : public SemType {
+public:
+    SemTypeName type_name;
+    STM();
+    SemTypeName getTypeName() override { return type_name; }
+};
+
+
+class STN : public SemType {
+public:
+    SemTypeName type_name;
+    STN();
+    SemTypeName getTypeName() override { return type_name; }
+};
+
 #endif //HW3_SEMANTICTYPES_H
