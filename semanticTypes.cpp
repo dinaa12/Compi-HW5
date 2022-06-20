@@ -11,6 +11,15 @@ static string sizeOfType(SemTypeName type) {
     return "void";
 }
 
+STM::STM() : type_name(code_buff.genLabel()) {}
+
+STN::STN() : next_list(vector<pair<int,BranchLabelIndex>>()) {
+    pair<int,BranchLabelIndex> new_pair;
+    new_pair.first = code_buff.emit("br label @");
+    new_pair.second = FIRST;
+    next_list = CodeBuffer::makelist(new_pair);
+}
+
 STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* s1, SemType* s2, SemType* s3) :
     type_name(t_name), type_value(t_val), reg(Reg()), true_list(std::vector<pair<int,BranchLabelIndex>>()), false_list(std::vector<pair<int,BranchLabelIndex>>()), next_list(std::vector<pair<int,BranchLabelIndex>>()) {
 
@@ -193,8 +202,11 @@ STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* 
     else if (d_rule == EXP_TO_NUM_B) {
         code_buff.emit(reg.name + " = add i8 " + t_val + ", 0");
     }
-    else if (d_rule == EXP_TO_STRING) { // TODO: ??????????????????
-        //global_code = "@." + s1->??? + " = internal constant [" + s1->getTypeValue().length() + " x i8] c\"" + s1->getTypeValue() + "\\00\"";
+    else if (d_rule == EXP_TO_STRING) {
+        global_code = "@." + s1->getStringName() + " = internal constant [" + to_string(s1->getTypeValue().length()) + " x i8] c\"" + s1->getTypeValue() + "\\00\"";
+        curr_code = reg.name + " = getelementptr [" + to_string(s1->getTypeValue().length()) + " x i8], [" + to_string(s1->getTypeValue().length()) + " x i8]* @." + s1->getStringName() + ", i32 0, i32 0";
+        code_buff.emitGlobal(global_code);
+        code_buff.emit(curr_code);
     }
     else if (d_rule == EXP_TO_TRUE) {
         pair<int, BranchLabelIndex> curr_list;
@@ -321,5 +333,5 @@ STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* 
     else {
         std::cerr << "DERIVATION RULE ERROR" << std::endl;
     }
-
 }
+

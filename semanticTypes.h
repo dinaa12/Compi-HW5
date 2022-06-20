@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include "register.h"
+#include "stringCreator.h"
 #include "bp.hpp"
 #include "symbolTable.h"
 
@@ -40,11 +41,13 @@ enum DERIVATION_RULE {
 class SemType {
 public:
     virtual SemTypeName getTypeName() {};
+    virtual string getStringName() {};
     virtual string getTypeValue() {};
     virtual SemTypeName getRetTypeName() {};
     virtual vector<SemTypeName> getListTypeName() {};
     virtual vector<string> getListNames() {};
     virtual Reg* getReg() {}; // TODO: implement in all classes
+    virtual string getLabel() {};
     virtual vector<pair<int, BranchLabelIndex>> getTrueList() {};
     virtual vector<pair<int, BranchLabelIndex>> getFalseList() {};
     virtual vector<pair<int, BranchLabelIndex>> getNextList() {};
@@ -62,7 +65,7 @@ public:
     STExp(SemTypeName t_name, string t_val = "", DERIVATION_RULE d_rule = NONE, SemType* s1 = nullptr, SemType* s2 = nullptr, SemType* s3 = nullptr);
     //STExp(SemTypeName t_name, string t_val = "") : type_name(t_name), type_value(t_val) {};
     SemTypeName getTypeName() override { return type_name; }
-    SemTypeName getTypeValue() override { return type_value; }
+    string getTypeValue() override { return type_value; }
     Reg* getReg() override { return &reg; }
     vector<pair<int, BranchLabelIndex>> getTrueList() override { return true_list; }
     vector<pair<int, BranchLabelIndex>> getFalseList() override { return false_list; }
@@ -135,7 +138,7 @@ public:
     string type_value;
     STFormalDecl(SemTypeName t_name, string t_val) : type_name(t_name), type_value(t_val) {};
     SemTypeName getTypeName() override { return type_name; }
-    SemTypeName getTypeValue() override { return type_value; }
+    string getTypeValue() override { return type_value; }
 };
 
 class STRelopEqual : public SemType {
@@ -144,7 +147,7 @@ public:
     string type_value;
     STRelopEqual(SemTypeName t_name, string t_val) : type_name(t_name), type_value(t_val) {};
     SemTypeName getTypeName() override { return type_name; }
-    SemTypeName getTypeValue() override { return type_value; }
+    string getTypeValue() override { return type_value; }
 };
 
 class STRelopCompare : public SemType {
@@ -153,7 +156,7 @@ public:
     string type_value;
     STRelopCompare(SemTypeName t_name, string t_val) : type_name(t_name), type_value(t_val) {};
     SemTypeName getTypeName() override { return type_name; }
-    SemTypeName getTypeValue() override { return type_value; }
+    string getTypeValue() override { return type_value; }
 };
 
 class STBinopAdd : public SemType {
@@ -162,7 +165,7 @@ public:
     string type_value;
     STBinopAdd(SemTypeName t_name, string t_val) : type_name(t_name), type_value(t_val) {};
     SemTypeName getTypeName() override { return type_name; }
-    SemTypeName getTypeValue() override { return type_value; }
+    string getTypeValue() override { return type_value; }
 };
 
 class STBinopSub : public SemType {
@@ -171,7 +174,7 @@ public:
     string type_value;
     STBinopSub(SemTypeName t_name, string t_val) : type_name(t_name), type_value(t_val) {};
     SemTypeName getTypeName() override { return type_name; }
-    SemTypeName getTypeValue() override { return type_value; }
+    string getTypeValue() override { return type_value; }
 };
 
 class STBinopMUL : public SemType {
@@ -180,7 +183,7 @@ public:
     string type_value;
     STBinopMUL(SemTypeName t_name, string t_val) : type_name(t_name), type_value(t_val) {};
     SemTypeName getTypeName() override { return type_name; }
-    SemTypeName getTypeValue() override { return type_value; }
+    string getTypeValue() override { return type_value; }
 };
 
 class STBinopDiv : public SemType {
@@ -189,7 +192,7 @@ public:
     string type_value;
     STBinopDiv(SemTypeName t_name, string t_val) : type_name(t_name), type_value(t_val) {};
     SemTypeName getTypeName() override { return type_name; }
-    SemTypeName getTypeValue() override { return type_value; }
+    string getTypeValue() override { return type_value; }
 };
 
 
@@ -199,7 +202,7 @@ public:
     string type_value;
     STID(SemTypeName t_name, string t_val) : type_name(t_name), type_value(t_val) {};
     SemTypeName getTypeName() override { return type_name; }
-    SemTypeName getTypeValue() override { return type_value; }
+    string getTypeValue() override { return type_value; }
 };
 
 class STNum : public SemType {
@@ -208,31 +211,31 @@ public:
     string type_value;
     STNum(SemTypeName t_name, string t_val) : type_name(t_name), type_value(t_val) {};
     SemTypeName getTypeName() override { return type_name; }
-    SemTypeName getTypeValue() override { return type_value; }
+    string getTypeValue() override { return type_value; }
 };
 
 class STString : public SemType {
 public:
-    SemTypeName type_name;
+    stringCreator _string;
     string type_value;
-    STString(SemTypeName t_name, string t_val) : type_name(t_name), type_value(t_val) {};
-    SemTypeName getTypeName() override { return type_name; }
-    SemTypeName getTypeValue() override { return type_value; }
+    STString(stringCreator t_name, string t_val) : _string(t_name), type_value(t_val) {};
+    string getStringName() override { return _string.name; }
+    string getTypeValue() override { return type_value; }
 };
 
 class STM : public SemType {
 public:
     SemTypeName type_name;
     STM();
-    SemTypeName getTypeName() override { return type_name; }
+    SemTypeName getLabel() override { return type_name; }
 };
 
 
 class STN : public SemType {
 public:
-    SemTypeName type_name;
+    vector<pair<int,BranchLabelIndex>> next_list;
     STN();
-    SemTypeName getTypeName() override { return type_name; }
+    vector<pair<int,BranchLabelIndex>> getNextList() override { return next_list; }
 };
 
 #endif //HW3_SEMANTICTYPES_H

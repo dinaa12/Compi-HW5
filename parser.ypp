@@ -205,10 +205,8 @@ Exp : LPAREN Exp RPAREN                                                     { $$
 ;
 
 M:                                                                          { $$ = new STM(); }
-;
 
 N:                                                                          { $$ = new STN(); }
-;
 
 %%
 

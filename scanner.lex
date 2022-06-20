@@ -54,7 +54,7 @@ continue											return CONTINUE;
 [a-zA-Z][a-zA-Z0-9]*						        yylval = new STID("ID", yytext); return ID;
 
 0|[1-9][0-9]*         					            yylval = new STNum("NUM", yytext); return NUM;
-\"([^\n\r\"\\]|\\[rnt"\\])+\"					    yylval = new STString("STRING", yytext); return STRING;
+\"([^\n\r\"\\]|\\[rnt"\\])+\"					    yylval = new STString(yytext); return STRING;
 
 \/\/[^\r\n]*[\r|\n|\r\n]?                           ; /* ignore comment */
 
