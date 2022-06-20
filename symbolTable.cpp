@@ -1,5 +1,6 @@
 #include "symbolTable.h"
 
+
 void SymbolTable::insertEntry(SymbolTableEntry* e) {
     this->table.push_back(e);
 }

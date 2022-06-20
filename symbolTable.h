@@ -4,10 +4,12 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "semanticTypes.h"
+//#include "semanticTypes.h"
 #include "hw3_output.hpp"
 
 using namespace std;
+
+typedef string SemTypeName;
 
 class SymbolTableEntry {
 public:
@@ -36,7 +38,6 @@ public:
     SymbolTableEntry* getEntryByNameInTable(string name);
 };
 
-
-
+extern SymbolTableEntry* getEntryByName(string name);
 
 #endif //HW3_SYMBOLTABLE_H

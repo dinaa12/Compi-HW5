@@ -12,6 +12,7 @@ using namespace std;
 extern vector<SymbolTable*> tables_stack;
 extern vector<int> offset_stack;
 extern int while_counter;
+//extern SymbolTableEntry* getEntryByName(string name);
 
 void checkMainExist();
 
