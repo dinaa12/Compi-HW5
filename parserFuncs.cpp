@@ -233,7 +233,7 @@ void createCodeBoolExpInExplist(SemType* exp) {
 void emitToCodeAllocateStack() {
 	code_buff.emit(local_variables_reg.add() + " = alloca [50 x i32]");
 }
-
+/*
 void emitToCodeExplicitReturn(SemType* exp) {
 	if (exp) {
 		string ret_val = exp->getReg()->name;
@@ -243,7 +243,7 @@ void emitToCodeExplicitReturn(SemType* exp) {
 		code_buff.emit("ret void");
 	}
 	code_buff.genLabel();
-}
+}*/
 
 void emitToCodeDefaultReturn(string ret_type) {
 	if (ret_type == "VOID") {

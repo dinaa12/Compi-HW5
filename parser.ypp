@@ -105,7 +105,6 @@ Statement : OpenScopeM LBRACE Statements RBRACE CloseScopeM                 { $$
             | Call SC                                                       { $$ = new STStatement(STATEMENT_TO_CALL); }
             | RETURN SC                                                     { 
                                                                                 checkRetVal("VOID", yylineno);
-                                                                                emitToCodeExplicitReturn();
                                                                                 $$ = new STStatement(STATEMENT_TO_RETURN); 
                                                                             }
             | RETURN Exp SC                                                 { 

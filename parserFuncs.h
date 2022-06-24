@@ -52,7 +52,7 @@ void createCodeBoolExpInExplist(SemType* exp = nullptr);
 
 void emitToCodeAllocateStack();
 
-void emitToCodeExplicitReturn(SemType* exp = nullptr);
+//void emitToCodeExplicitReturn(SemType* exp = nullptr);
 
 void emitToCodeDefaultReturn(string ret_type);
 
