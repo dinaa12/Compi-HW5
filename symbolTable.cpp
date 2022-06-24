@@ -16,10 +16,10 @@ void SymbolTable::printTable() {
             current_entry_args.erase(current_entry_args.begin());
             current_entry_args.pop_back();
             string current_entry_ret_type = current_entry->type[current_entry->type.size()-1];
-            output::printID(current_entry_name, current_entry_offset, output::makeFunctionType(current_entry_ret_type, current_entry_args));
+            //output::printID(current_entry_name, current_entry_offset, output::makeFunctionType(current_entry_ret_type, current_entry_args));
         }
         else {
-            output::printID(current_entry_name, current_entry_offset, current_entry_type);
+            //output::printID(current_entry_name, current_entry_offset, current_entry_type);
         }
     }
 }

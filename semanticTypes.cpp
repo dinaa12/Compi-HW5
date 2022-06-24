@@ -170,23 +170,27 @@ STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* 
             code_buff.emit(addr_reg.name + " = getelementptr [50 x i32], [50 x i32]* " + local_variables_reg.name + ", i32 0, i32 " + local_index);
             if (sizeOfType(type_name) != "i32") { // type is BOOL or BYTE
                 Reg extended_reg;
-                code_buff.emit(extended_reg.name + " load i32, i32* " + addr_reg.name);
+                code_buff.emit(extended_reg.name + " = load i32, i32* " + addr_reg.name);
                 code_buff.emit(new_reg.name + " = trunc i32 "+ extended_reg.name + " to " + sizeOfType(type_name));
             }
             else {
                 code_buff.emit(new_reg.name + " = load i32, i32* " + addr_reg.name);
             }
-            if (s1->getTypeName() == "BOOL") {
-                Reg cond_reg;
-                code_buff.emit(cond_reg.name + " = icmp eq i1 " + new_reg.name + ", 1");
-                int br_cmd_addr = code_buff.emit("br i1 " + cond_reg.name + ", label @, label @");
-                pair<int, BranchLabelIndex> curr_list;
-                curr_list.first = br_cmd_addr;
-                curr_list.second = FIRST;
-                true_list = CodeBuffer::makelist((curr_list));
-                curr_list.second = SECOND;
-                false_list = CodeBuffer::makelist((curr_list));
-            }
+        }
+        //cout << "DUEBUG: " << "s1->getTypeName() = " << s1->getTypeName() << endl;
+        if (type_name == "BOOL") {
+            Reg cond_reg;
+            code_buff.emit(cond_reg.name + " = icmp eq i1 " + new_reg.name + ", 1");
+            int br_cmd_addr = code_buff.emit("br i1 " + cond_reg.name + ", label @, label @");
+            pair<int, BranchLabelIndex> curr_list;
+            curr_list.first = br_cmd_addr;
+            curr_list.second = FIRST;
+            true_list = CodeBuffer::makelist((curr_list));
+            curr_list.second = SECOND;
+            false_list = CodeBuffer::makelist((curr_list));
+        }
+        else {
+            code_buff.emit(reg.name + " = add " + sizeOfType(type_name) + " " + new_reg.name + ", 0");
         }
     }
     else if (d_rule == EXP_TO_CALL) {
@@ -213,8 +217,8 @@ STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* 
         code_buff.emit(reg.name + " = add i8 " + t_val + ", 0");
     }
     else if (d_rule == EXP_TO_STRING) {
-        global_code = "@." + s1->getStringName() + " = internal constant [" + to_string(s1->getTypeValue().length()) + " x i8] c\"" + s1->getTypeValue() + "\\00\"";
-        curr_code = reg.name + " = getelementptr [" + to_string(s1->getTypeValue().length()) + " x i8], [" + to_string(s1->getTypeValue().length()) + " x i8]* @." + s1->getStringName() + ", i32 0, i32 0";
+        global_code = "@." + s1->getStringName() + " = internal constant [" + to_string(s1->getTypeValue().length() + 1) + " x i8] c\"" + s1->getTypeValue() + "\\00\"";
+        curr_code = reg.name + " = getelementptr [" + to_string(s1->getTypeValue().length() + 1) + " x i8], [" + to_string(s1->getTypeValue().length() + 1) + " x i8]* @." + s1->getStringName() + ", i32 0, i32 0";
         code_buff.emitGlobal(global_code);
         code_buff.emit(curr_code);
     }
@@ -237,12 +241,12 @@ STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* 
         false_list = s1->getTrueList();
     }
     else if (d_rule == EXP_TO_EXP_AND_EXP) {
-        code_buff.bpatch(s1->getTrueList(), "AND");
+        code_buff.bpatch(s1->getTrueList(), s3->getLabel());
         false_list = CodeBuffer::merge(s1->getFalseList(), s2->getFalseList());
         true_list = s2->getTrueList();
     }
     else if (d_rule == EXP_TO_EXP_OR_EXP) {
-        code_buff.bpatch(s1->getFalseList(), "OR");
+        code_buff.bpatch(s1->getFalseList(), s3->getLabel());
         true_list = CodeBuffer::merge(s1->getTrueList(), s2->getTrueList());
         false_list = s2->getFalseList();
     }
@@ -457,7 +461,7 @@ STStatement::STStatement(DERIVATION_RULE d_rule, SemType* s1, SemType* s2, SemTy
         code_buff.emit("ret " + sizeOfType(s1->getTypeName()) + " " + s1->getReg()->name);
         code_buff.genLabel();
     }
-    else if (d_rule == STATEMETN_TO_IF) {
+    else if (d_rule == STATEMENT_TO_IF) {
         if (s4->getIsEpsilon()) { // only if statement
             code_buff.bpatch(s1->getTrueList(), s2->getLabel());
             next_list = CodeBuffer::merge(s1->getFalseList(), s3->getNextList());

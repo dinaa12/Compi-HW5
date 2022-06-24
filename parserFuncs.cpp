@@ -121,7 +121,7 @@ void openScope() {
 }
 
 void closeScope() {
-    output::endScope();
+    //output::endScope();
     /* pop and print current symbol table */
     SymbolTable* curr_table = tables_stack.back();
     curr_table->SymbolTable::printTable();

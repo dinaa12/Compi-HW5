@@ -44,7 +44,7 @@ enum DERIVATION_RULE {
     STATEMENT_TO_CALL,
     STATEMENT_TO_RETURN,
     STATEMENT_TO_RETURN_EXP,
-    STATEMETN_TO_IF,    
+    STATEMENT_TO_IF,    
     STATEMENT_TO_WHILE,
     STATEMENT_TO_BREAK,
     STATEMENT_TO_CONTINUE,
@@ -248,7 +248,7 @@ public:
     string type_value;
     STString(string t_val) : type_value(t_val) {};
     string getStringName() override { return _string.name; }
-    string getTypeValue() override { return type_value; }
+    string getTypeValue() override { return type_value.substr(1, type_value.size() - 2); }
 };
 
 class STM : public SemType {

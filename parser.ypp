@@ -118,7 +118,7 @@ Statement : OpenScopeM LBRACE Statements RBRACE CloseScopeM                 { $$
             | IF LPAREN Exp RPAREN M
                 { checkType($3->getTypeName(), "BOOL", yylineno);
                 checkType($3->getTypeName(), "BOOL", yylineno); }
-                OpenScopeM Statement CloseScopeM IFELSEM                    { $$ = new STStatement(STATEMETN_TO_IF, $3, $5, $8, $10); }
+                OpenScopeM Statement CloseScopeM IFELSEM                    { $$ = new STStatement(STATEMENT_TO_IF, $3, $5, $8, $10); }
             | N WHILE LPAREN M Exp RPAREN M
                 { checkType($5->getTypeName(), "BOOL", yylineno);
                 while_counter++; }
@@ -197,6 +197,7 @@ Exp : LPAREN Exp RPAREN                                                     { $$
                                                                             }
       | ID                                                                  {
                                                                                 SemTypeName id_type = checkIDInSymTable($1->getTypeValue(), yylineno);
+                                                                                //cout << "yylineno = " << yylineno << " id_type = " << id_type << " id name = " << $1->getTypeValue() << endl;
                                                                                 $$ = new STExp(id_type, "", EXP_TO_ID, $1);
                                                                             }
       | Call                                                                { $$ = new STExp($1->getTypeName(), "", EXP_TO_CALL, $1); }
