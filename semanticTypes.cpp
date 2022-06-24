@@ -360,8 +360,7 @@ STIfElse::STIfElse(SemType* s1, SemType* s2, SemType* s3, bool is_epsilon) :
 }
 
 STStatement::STStatement(DERIVATION_RULE d_rule, SemType* s1, SemType* s2, SemType* s3, SemType* s4, SemType* s5, SemType* s6) :
-    break_list(vector<pair<int,BranchLabelIndex>>()), continue_list(vector<pair<int,BranchLabelIndex>>()), next_list(vector<pair<int,BranchLabelIndex>>())
-{
+    break_list(vector<pair<int,BranchLabelIndex>>()), continue_list(vector<pair<int,BranchLabelIndex>>()), next_list(vector<pair<int,BranchLabelIndex>>()) {
 
     string curr_code;
     string global_code;
@@ -530,14 +529,12 @@ STStatements::STStatements(DERIVATION_RULE d_rule, SemType* s1, SemType* s2, Sem
     }
 }
 
-STExpList::STExpList(SemType* exp)
-{ 
+STExpList::STExpList(SemType* exp) { 
     list_type_name.push_back(exp->getTypeName()); 
     list_regs_names.push_back(exp->getReg()->name);
 }
 
-STExpList::STExpList(SemType* exp, SemType* exp_list)
-{
+STExpList::STExpList(SemType* exp, SemType* exp_list) {
     list_type_name = vector<SemTypeName>(exp_list->getListTypeName());
     list_type_name.insert(list_type_name.begin(), exp->getTypeName());
     list_regs_names = vector<string>(exp_list->getListRegsNames());
@@ -545,8 +542,7 @@ STExpList::STExpList(SemType* exp, SemType* exp_list)
 };
 
 STCall::STCall(SemTypeName t_name, DERIVATION_RULE d_rule, SemType* s1, SemType* s2) : 
-    type_name(t_name), reg(Reg())
-{
+    type_name(t_name), reg(Reg()) {
     // s1: ID, s2: ExpList
     if (d_rule == CALL_TO_ID) {
         if (type_name == "VOID") {

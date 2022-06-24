@@ -224,7 +224,6 @@ public:
     string getTypeValue() override { return type_value; }
 };
 
-
 class STID : public SemType {
 public:
     SemTypeName type_name;
