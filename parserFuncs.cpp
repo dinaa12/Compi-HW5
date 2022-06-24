@@ -268,3 +268,28 @@ void emitToCodeFunctionDefinition(string ret_type, string func_name, vector<std:
 	curr_code += ") {";
 	code_buff.emit(curr_code);
 }
+
+void declareGlobalFunctions() {
+	code_buff.emitGlobal("declare i32 @printf(i8*, ...)");
+	code_buff.emitGlobal("declare void @exit(i32)");
+	code_buff.emitGlobal("@.int_specifier = constant [4 x i8] c\"%d\\0A\\00\"");
+	code_buff.emitGlobal("@.str_specifier = constant [4 x i8] c\"%s\\0A\\00\"");
+
+	code_buff.emit("define void @printi(i32) {");
+	code_buff.emit("%spec_ptr = getelementptr [4 x i8], [4 x i8]* @.int_specifier, i32 0, i32 0");
+	code_buff.emit("call i32 (i8*, ...) @printf(i8* %spec_ptr, i32 %0)");
+	code_buff.emit("ret void");
+	code_buff.emit("}");
+	code_buff.emit("");
+
+	code_buff.emit("define void @print(i8*) {");
+	code_buff.emit("%spec_ptr = getelementptr [4 x i8], [4 x i8]* @.str_specifier, i32 0, i32 0");
+	code_buff.emit("call i32 (i8*, ...) @printf(i8* %spec_ptr, i8* %0)");
+	code_buff.emit("ret void");
+	code_buff.emit("}");
+	code_buff.emit("");
+}
+
+void declareDivisionByZeroMessage() {
+	code_buff.emitGlobal("@.div_error = internal constant [23 x i8] c\"Error division by zero\\00\"");
+}

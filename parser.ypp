@@ -37,6 +37,8 @@
 Program : ProgramM1 Funcs                                                   {
                                                                                 checkMainExist();
                                                                                 closeScope();
+                                                                                code_buff.printGlobalBuffer();
+                                                                                code_buff.printCodeBuffer();
                                                                             }
 ;
 
@@ -44,6 +46,8 @@ ProgramM1 : /*epsilon*/                                                     {
                                                                                 openScope();
                                                                                 addFuncToSymTable("print", "VOID", vector<SemTypeName>(1, "STRING"), -1);
                                                                                 addFuncToSymTable("printi", "VOID", vector<SemTypeName>(1, "INT"), -1);
+                                                                                declareGlobalFunctions();
+                                                                                declareDivisionByZeroMessage();
                                                                             }
 ;
 

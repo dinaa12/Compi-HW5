@@ -58,4 +58,8 @@ void emitToCodeDefaultReturn(string ret_type);
 
 void emitToCodeFunctionDefinition(string ret_type, string func_name, vector<std::string> args_types);
 
+void declareGlobalFunctions();
+
+void declareDivisionByZeroMessage();
+
 #endif //HW3_PARSERFUNCS_H
