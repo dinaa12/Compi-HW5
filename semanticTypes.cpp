@@ -547,7 +547,7 @@ STExpList::STExpList(SemType* exp, SemType* exp_list)
 STCall::STCall(SemTypeName t_name, DERIVATION_RULE d_rule, SemType* s1, SemType* s2) : 
     type_name(t_name), reg(Reg())
 {
-   /* // s1: ID, s2: ExpList
+    // s1: ID, s2: ExpList
     if (d_rule == CALL_TO_ID) {
         if (type_name == "VOID") {
             code_buff.emit("call " + sizeOfType(type_name) + " @" + s1->getTypeValue() + "()");
@@ -557,7 +557,7 @@ STCall::STCall(SemTypeName t_name, DERIVATION_RULE d_rule, SemType* s1, SemType*
         }
     }
     else if (d_rule == CALL_TO_ID_LPAREN_EXPLIST_RPAREN) {
-        SymbolTableEntry* entry = getEntryByName(s1->getTypeName());
+        SymbolTableEntry* entry = getEntryByName(s1->getTypeValue());
         vector<SemTypeName> func_args(entry->type);
         func_args.erase(func_args.begin());
         func_args.pop_back();
@@ -584,5 +584,5 @@ STCall::STCall(SemTypeName t_name, DERIVATION_RULE d_rule, SemType* s1, SemType*
             i--;
         }
         code_buff.emit(curr_code.substr(0, curr_code.size() - 2) + ")");
-    }*/
+    }
 }
