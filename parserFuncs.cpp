@@ -229,3 +229,42 @@ void createCodeBoolExpInExplist(SemType* exp) {
         code_buff.emit(exp->getReg()->name + " = phi i1 [1, %" + true_label + "], [0, %" + false_label + "]");
     }
 }
+
+void emitToCodeAllocateStack() {
+	code_buff.emit(local_variables_reg.add() + " = alloca [50 x i32]");
+}
+
+void emitToCodeExplicitReturn(SemType* exp) {
+	if (exp) {
+		string ret_val = exp->getReg()->name;
+		code_buff.emit("ret " + sizeOfType(exp->getTypeName()) + " " + ret_val);
+	}
+	else {
+		code_buff.emit("ret void");
+	}
+	code_buff.genLabel();
+}
+
+void emitToCodeDefaultReturn(string ret_type) {
+	if (ret_type == "VOID") {
+		code_buff.emit("ret void");
+	}
+	else {
+		code_buff.emit("ret " + sizeOfType(ret_type) + " 0");
+	}
+	code_buff.emit("}");
+	code_buff.emit(""); // add new line
+}
+
+void emitToCodeFunctionDefinition(string ret_type, string func_name, vector<std::string> args_types) {
+	string curr_code;
+	curr_code = "define " + sizeOfType(ret_type) + " @" + func_name + "(";
+	for (auto it = args_types.rbegin(); it != args_types.rend(); ++it) {
+		curr_code += sizeOfType((*it)) + ", ";
+	}
+	if (!args_types.empty()) { // remove '@('
+		curr_code = curr_code.substr(0, curr_code.size() - 2);
+	}
+	curr_code += ") {";
+	code_buff.emit(curr_code);
+}

@@ -52,10 +52,15 @@ Funcs : FuncDecl Funcs                                                      { }
 ;
 
 FuncDecl :  RetType ID LPAREN Formals RPAREN
-            { addFuncToSymTable($2->getTypeValue(), $1->getTypeName(), $4->getListTypeName(), yylineno); }
+            { 
+                addFuncToSymTable($2->getTypeValue(), $1->getTypeName(), $4->getListTypeName(), yylineno); 
+                emitToCodeFunctionDefinition($1->getTypeName(), $2->getTypeValue(), $4->getListTypeName()); 
+                emitToCodeAllocateStack();
+            }
             OpenScopeM
             { addFuncArgsToSymTable($4->getListTypeName(), $4->getListNames(), yylineno); }
-            LBRACE Statements RBRACE CloseScopeM {}
+            LBRACE Statements RBRACE CloseScopeM 
+            { emitToCodeDefaultReturn($1->getTypeName()); }
 ;
 
 RetType : Type                                                              { $$ = new STRetType($1->getTypeName()); }
@@ -100,6 +105,7 @@ Statement : OpenScopeM LBRACE Statements RBRACE CloseScopeM                 { $$
             | Call SC                                                       { $$ = new STStatement(STATEMENT_TO_CALL); }
             | RETURN SC                                                     { 
                                                                                 checkRetVal("VOID", yylineno);
+                                                                                emitToCodeExplicitReturn();
                                                                                 $$ = new STStatement(STATEMENT_TO_RETURN); 
                                                                             }
             | RETURN Exp SC                                                 { 

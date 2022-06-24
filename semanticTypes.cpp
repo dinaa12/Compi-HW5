@@ -3,7 +3,7 @@
 
 CodeBuffer& code_buff = CodeBuffer::instance();
 
-static string sizeOfType(SemTypeName type) {
+string sizeOfType(SemTypeName type) {
     if (type == "INT") return "i32";
     if (type == "BYTE") return "i8";
     if (type == "BOOL") return "i1";

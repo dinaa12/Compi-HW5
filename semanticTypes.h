@@ -54,6 +54,8 @@ enum DERIVATION_RULE {
     CALL_TO_ID_LPAREN_EXPLIST_RPAREN
 };
 
+string sizeOfType(SemTypeName type);
+
 class SemType {
 public:
     virtual SemTypeName getTypeName() {};
@@ -61,7 +63,6 @@ public:
     virtual string getTypeValue() {};
     virtual SemTypeName getRetTypeName() {};
     virtual vector<SemTypeName> getListTypeName() {};
-    virtual vector<SemTypeName> getListTypeName2() {};
     virtual vector<string> getListNames() {};
     virtual Reg* getReg() {};
     virtual string getLabel() {};
@@ -140,14 +141,21 @@ public:
 class STFormalsList : public SemType {
 public:
     SemTypeName type_name;
-    vector<SemTypeName> list_type_name;
-    vector<string> list_names;
+    vector<SemTypeName> list_type_name; // list og args type
+    vector<string> list_names; // list of args names
     STFormalsList() = default;
     STFormalsList(SemTypeName t_name, string t_val)
-        { list_type_name.push_back(t_name); list_names.push_back(t_val); };
+        { 
+            list_type_name.push_back(t_name); 
+            list_names.push_back(t_val); 
+        };
     STFormalsList(SemTypeName t_name, vector<SemTypeName> l_t_name, string t_val, vector<string> l_t_val)
-        { list_type_name.push_back(t_name); list_type_name.insert(list_type_name.end(), l_t_name.begin(), l_t_name.end());
-            list_names.push_back(t_val); list_names.insert(list_names.end(), l_t_val.begin(), l_t_val.end()); };
+        { 
+            list_type_name.push_back(t_name); 
+            list_type_name.insert(list_type_name.end(), l_t_name.begin(), l_t_name.end());
+            list_names.push_back(t_val); 
+            list_names.insert(list_names.end(), l_t_val.begin(), l_t_val.end());
+        };
     SemTypeName getTypeName() override { return type_name; }
     vector<SemTypeName> getListTypeName() override { return list_type_name; }
     vector<string> getListNames() override { return list_names; }
