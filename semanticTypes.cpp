@@ -568,8 +568,7 @@ STCall::STCall(SemTypeName t_name, DERIVATION_RULE d_rule, SemType* s1, SemType*
         else {
             curr_code = reg.name + " = call " + sizeOfType(type_name) + " @" + s1->getTypeValue() + "(";
         }
-        size_t i = s2->getListRegsNames().size() - 1;
-        while (true) {
+        for (size_t i = 0; i < s2->getListRegsNames().size(); i++) {
             if (sizeOfType(s2->getListTypeName()[i]) != sizeOfType(func_args[i])) {
                 Reg new_reg;
                 code_buff.emit(new_reg.name + " = zext i8 " + s2->getListRegsNames()[i] + " to i32");
@@ -578,10 +577,6 @@ STCall::STCall(SemTypeName t_name, DERIVATION_RULE d_rule, SemType* s1, SemType*
             else {
                 curr_code += sizeOfType(func_args[i]) + " " + s2->getListRegsNames()[i] + ", ";
             }
-            if (i == 0) {
-                break;
-            }
-            i--;
         }
         code_buff.emit(curr_code.substr(0, curr_code.size() - 2) + ")");
     }

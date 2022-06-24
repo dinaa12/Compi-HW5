@@ -256,10 +256,10 @@ void emitToCodeDefaultReturn(string ret_type) {
 	code_buff.emit(""); // add new line
 }
 
-void emitToCodeFunctionDefinition(string ret_type, string func_name, vector<std::string> args_types) {
+void emitToCodeFunctionDefinition(string ret_type, string func_name, vector<string> args_types) {
 	string curr_code;
 	curr_code = "define " + sizeOfType(ret_type) + " @" + func_name + "(";
-	for (auto it = args_types.rbegin(); it != args_types.rend(); ++it) {
+	for (auto it = args_types.begin(); it != args_types.end(); ++it) {
 		curr_code += sizeOfType((*it)) + ", ";
 	}
 	if (!args_types.empty()) { // remove '@('
