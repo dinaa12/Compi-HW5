@@ -529,3 +529,60 @@ STStatements::STStatements(DERIVATION_RULE d_rule, SemType* s1, SemType* s2, Sem
 
     }
 }
+
+STExpList::STExpList(SemType* exp)
+{ 
+    list_type_name.push_back(exp->getTypeName()); 
+    list_regs_names.push_back(exp->getReg()->name);
+}
+
+STExpList::STExpList(SemType* exp, SemType* exp_list)
+{
+    list_type_name = vector<SemTypeName>(exp_list->getListTypeName());
+    list_type_name.insert(list_type_name.begin(), exp->getTypeName());
+    list_regs_names = vector<string>(exp_list->getListRegsNames());
+    list_regs_names.insert(list_regs_names.begin(), exp->getReg()->name);
+};
+
+STCall::STCall(SemTypeName t_name, DERIVATION_RULE d_rule, SemType* s1, SemType* s2) : 
+    type_name(t_name), reg(Reg())
+{
+   /* // s1: ID, s2: ExpList
+    if (d_rule == CALL_TO_ID) {
+        if (type_name == "VOID") {
+            code_buff.emit("call " + sizeOfType(type_name) + " @" + s1->getTypeValue() + "()");
+        }
+        else {
+            code_buff.emit(reg.name + " = call " + sizeOfType(type_name) + " @" + s1->getTypeValue() + "()");
+        }
+    }
+    else if (d_rule == CALL_TO_ID_LPAREN_EXPLIST_RPAREN) {
+        SymbolTableEntry* entry = getEntryByName(s1->getTypeName());
+        vector<SemTypeName> func_args(entry->type);
+        func_args.erase(func_args.begin());
+        func_args.pop_back();
+        string curr_code;
+        if (type_name == "VOID") {
+            curr_code = "call " + sizeOfType(type_name) + " @" + s1->getTypeValue() + "(";
+        }
+        else {
+            curr_code = reg.name + " = call " + sizeOfType(type_name) + " @" + s1->getTypeValue() + "(";
+        }
+        size_t i = s2->getListRegsNames().size() - 1;
+        while (true) {
+            if (sizeOfType(s2->getListTypeName()[i]) != sizeOfType(func_args[i])) {
+                Reg new_reg;
+                code_buff.emit(new_reg.name + " = zext i8 " + s2->getListRegsNames()[i] + " to i32");
+                curr_code += sizeOfType(func_args[i]) + " " + new_reg.name + ", ";
+            }
+            else {
+                curr_code += sizeOfType(func_args[i]) + " " + s2->getListRegsNames()[i] + ", ";
+            }
+            if (i == 0) {
+                break;
+            }
+            i--;
+        }
+        code_buff.emit(curr_code.substr(0, curr_code.size() - 2) + ")");
+    }*/
+}

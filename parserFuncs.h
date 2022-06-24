@@ -48,4 +48,6 @@ void addFuncToSymTable(string func_name, SemTypeName ret_type, vector<SemTypeNam
 
 void addFuncArgsToSymTable(vector<SemTypeName> args_types, vector<string> args_names, int line);
 
+void createCodeBoolExpInExplist(SemType* exp);
+
 #endif //HW3_PARSERFUNCS_H

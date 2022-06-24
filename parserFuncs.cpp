@@ -75,6 +75,8 @@ void checkFuncArgsInTable(string func_name, int line, vector<SemTypeName> arg) {
     entry_args.erase(entry_args.begin());
     entry_args.pop_back();
 
+    //cout << arg[0] << endl;
+
     if (arg.size() == 0) {
         if (entry_args.size() != 0) {
             output::errorPrototypeMismatch(line, func_name, entry_args);
@@ -199,5 +201,31 @@ void addFuncArgsToSymTable(vector<SemTypeName> args_types, vector<string> args_n
             sym_table->insertEntry(entry_to_insert);
             arg_offset--;
         }
+    }
+}
+
+void createCodeBoolExpInExplist(SemType* exp) {
+	if (exp->getTypeName() == "BOOL") {
+        string true_label = code_buff.genLabel();
+        code_buff.bpatch(exp->getTrueList(), true_label);
+        int br_true_label_cmd_addr = code_buff.emit("br label @");
+        pair<int,BranchLabelIndex> true_label_list_item;
+        true_label_list_item.first = br_true_label_cmd_addr;
+        true_label_list_item.second = FIRST;
+
+        string false_label = code_buff.genLabel();
+        code_buff.bpatch(exp->getFalseList(), false_label);
+        int br_false_label_cmd_addr = code_buff.emit("br label @");
+        pair<int,BranchLabelIndex> false_label_list_item;
+        false_label_list_item.first = br_false_label_cmd_addr;
+        false_label_list_item.second = FIRST;
+
+        vector<pair<int,BranchLabelIndex>> curr_list_item_to_patch;
+        curr_list_item_to_patch.push_back(true_label_list_item);
+        curr_list_item_to_patch.push_back(false_label_list_item);
+        string end_label = code_buff.genLabel();
+        code_buff.bpatch(curr_list_item_to_patch, end_label);
+
+        code_buff.emit(exp->getReg()->name + " = phi i1 [1, %" + true_label + "], [0, %" + false_label + "]");
     }
 }

@@ -141,17 +141,23 @@ OpenScopeM : /*epsilon*/                                                    { op
 Call : ID LPAREN ExpList RPAREN                                             {
                                                                                 SemTypeName ret_type = checkFuncInSymTable($1->getTypeValue(), yylineno);
                                                                                 checkFuncArgsInTable($1->getTypeValue(), yylineno, $3->getListTypeName());
-                                                                                $$ = new STCall(ret_type);
+                                                                                $$ = new STCall(ret_type, CALL_TO_ID_LPAREN_EXPLIST_RPAREN, $1, $3);
                                                                             }
        | ID LPAREN RPAREN                                                   {
                                                                                 SemTypeName ret_type = checkFuncInSymTable($1->getTypeValue(), yylineno);
                                                                                 checkFuncArgsInTable($1->getTypeValue(), yylineno, vector<SemTypeName>());
-                                                                                $$ = new STCall(ret_type);
+                                                                                $$ = new STCall(ret_type, CALL_TO_ID, $1);
                                                                             }
 ;
 
-ExpList : Exp                                                               { $$ = new STExpList($1->getTypeName()); }
-          | Exp COMMA ExpList                                               { $$ = new STExpList($1->getTypeName(), $3->getListTypeName()); }
+ExpList : Exp                                                               { 
+                                                                                createCodeBoolExpInExplist($1);
+                                                                                $$ = new STExpList($1); 
+                                                                            }
+          | Exp COMMA ExpList                                               { 
+                                                                                createCodeBoolExpInExplist($1);
+                                                                                $$ = new STExpList($1, $3);
+                                                                            }
 ;
 
 Type : INT                                                                  { $$ = new STType("INT"); }

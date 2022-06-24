@@ -48,10 +48,10 @@ enum DERIVATION_RULE {
     STATEMENT_TO_WHILE,
     STATEMENT_TO_BREAK,
     STATEMENT_TO_CONTINUE,
-
     STATEMENTS_TO_STATEMENT,
-    STATEMENTS_TO_STATEMENTS_STATEMENT
-
+    STATEMENTS_TO_STATEMENTS_STATEMENT,
+    CALL_TO_ID,
+    CALL_TO_ID_LPAREN_EXPLIST_RPAREN
 };
 
 class SemType {
@@ -61,10 +61,12 @@ public:
     virtual string getTypeValue() {};
     virtual SemTypeName getRetTypeName() {};
     virtual vector<SemTypeName> getListTypeName() {};
+    virtual vector<SemTypeName> getListTypeName2() {};
     virtual vector<string> getListNames() {};
-    virtual Reg* getReg() {}; // TODO: implement in all classes
+    virtual Reg* getReg() {};
     virtual string getLabel() {};
     virtual bool getIsEpsilon() {};
+    virtual vector<string> getListRegsNames() {};
     virtual vector<pair<int, BranchLabelIndex>> getTrueList() {};
     virtual vector<pair<int, BranchLabelIndex>> getFalseList() {};
     virtual vector<pair<int, BranchLabelIndex>> getNextList() {};
@@ -111,19 +113,19 @@ class STExpList : public SemType {
 public:
     SemTypeName type_name;
     vector<SemTypeName> list_type_name;
-    STExpList(SemTypeName t_name)
-        { list_type_name.push_back(t_name); };
-    STExpList(SemTypeName t_name, vector<SemTypeName> l_t_name)
-        { list_type_name.push_back(t_name); list_type_name.insert(list_type_name.end(), l_t_name.begin(), l_t_name.end()); };
+    vector<string> list_regs_names;
+    STExpList(SemType* exp);
+    STExpList(SemType* exp, SemType* exp_list);
     SemTypeName getTypeName() override { return type_name; }
     vector<SemTypeName> getListTypeName() override { return list_type_name; }
+    vector<string> getListRegsNames() override { return list_regs_names; }
 };
 
 class STCall : public SemType {
 public:
     SemTypeName type_name; // return type name
     Reg reg;
-    STCall(SemTypeName t_name) : type_name(t_name), reg(Reg()) {};
+    STCall(SemTypeName t_name, DERIVATION_RULE d_rule = NONE, SemType* s1 = nullptr, SemType* s2 = nullptr);
     SemTypeName getTypeName() override { return type_name; }
     Reg* getReg() override { return &reg; }
 };
