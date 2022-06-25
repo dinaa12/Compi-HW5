@@ -163,10 +163,7 @@ ExpList : Exp                                                               {
                                                                                 createCodeBoolExpInExplist($1);
                                                                                 $$ = new STExpList($1); 
                                                                             }
-          | Exp COMMA ExpList                                               { 
-                                                                                createCodeBoolExpInExplist($1);
-                                                                                $$ = new STExpList($1, $3);
-                                                                            }
+          | Exp { createCodeBoolExpInExplist($1); } COMMA ExpList           { $$ = new STExpList($1, $4); }
 ;
 
 Type : INT                                                                  { $$ = new STType("INT"); }
