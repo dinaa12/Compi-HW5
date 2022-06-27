@@ -11,6 +11,11 @@ string sizeOfType(SemTypeName type) {
     return "void";
 }
 
+void createReg0() {
+    Reg reg0;
+    code_buff.emit(reg0.name + " = add i32 " + "0, 0");
+}
+
 STM::STM() : label(code_buff.genLabel()) {}
 
 STN::STN() : next_list(std::vector<pair<int,BranchLabelIndex>>()) {
@@ -116,12 +121,13 @@ STExp::STExp(SemTypeName t_name, string t_val, DERIVATION_RULE d_rule, SemType* 
             if (s1->getTypeName() == "BYTE") {
                 Reg extended_reg;
                 code_buff.emit(extended_reg.name + " = zext i8 " + reg_operand1->name + " to i32");
-                reg_operand1 = &extended_reg;
+                reg_operand1->name = extended_reg.name;
             }
             else if (s2->getTypeName() == "BYTE") {
                 Reg extended_reg;
                 code_buff.emit(extended_reg.name + " = zext i8 " + reg_operand2->name + " to i32");
-                reg_operand2 = &extended_reg;
+                reg_operand2->name = extended_reg.name;
+                reg_operand2_size = "i32";
             }
         }
 
@@ -381,12 +387,6 @@ STStatement::STStatement(DERIVATION_RULE d_rule, SemType* s1, SemType* s2, SemTy
         curr_code = "store i32 0, i32* " + reg1.name;
         code_buff.emit(curr_code);
     }
-    else if (d_rule == STATEMENT_TO_TYPE_ID_ASSIGN_EXP) { // ?
-        
-    }
-    else if (d_rule == STATEMENT_TO_AUTO_ID_ASSIGN_EXP) { // ?
-        
-    }
     else if (d_rule == STATEMENT_TO_ID_ASSIGN_EXP) {
         Reg reg1, reg2;
         if (s2->getTypeName() != "BOOL") {
@@ -517,6 +517,7 @@ STStatement::STStatement(DERIVATION_RULE d_rule, SemType* s1, SemType* s2, SemTy
         continue_br_list_item.second = FIRST;
         continue_list = CodeBuffer::makelist(continue_br_list_item);
     }
+    createReg0();
 }
 
 STStatements::STStatements(DERIVATION_RULE d_rule, SemType* s1, SemType* s2, SemType* s3) : 

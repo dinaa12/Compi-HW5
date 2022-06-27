@@ -4,7 +4,7 @@ LocalVariablesReg local_variables_reg;
 
 Reg::Reg() {
     name = "%reg" + to_string(reg_counter);
-    reg_counter++;
+    reg_counter+=2;
 }
 
 string LocalVariablesReg::add() {
